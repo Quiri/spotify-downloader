@@ -52,27 +52,11 @@ def input_link(links):
             log.warning("Choose a valid number!")
 
 
-def trim_song(tracks_file):
-    """ Remove the first song from file. """
-    with open(tracks_file, "r") as file_in:
-        data = file_in.read().splitlines(True)
-    with open(tracks_file, "w") as file_out:
-        file_out.writelines(data[1:])
-    return data[0]
-
 
 def is_spotify(raw_song):
     """ Check if the input song is a Spotify link. """
     status = len(raw_song) == 22 and raw_song.replace(" ", "%20") == raw_song
     status = status or raw_song.find("spotify") > -1
-    return status
-
-
-def is_youtube(raw_song):
-    """ Check if the input song is a YouTube link. """
-    status = len(raw_song) == 11 and raw_song.replace(" ", "%20") == raw_song
-    status = status and not raw_song.lower() == raw_song
-    status = status or "youtube.com/watch?v=" in raw_song
     return status
 
 
@@ -194,78 +178,6 @@ def extract_spotify_id(raw_string):
 
     return spotify_id
 
-
-def get_unique_tracks(tracks_file):
-    """
-    Returns a list of unique tracks given a path to a
-    file containing tracks.
-    """
-
-    log.info(
-        "Checking and removing any duplicate tracks "
-        "in reading {}".format(tracks_file)
-    )
-    with open(tracks_file, "r") as tracks_in:
-        # Read tracks into a list and remove any duplicates
-        lines = tracks_in.read().splitlines()
-
-    # Remove blank and strip whitespaces from lines (if any)
-    lines = [line.strip() for line in lines if line.strip()]
-    lines = remove_duplicates(lines)
-    return lines
-
-
-# a hacky way to get user's localized music directory
-# (thanks @linusg, issue #203)
-def get_music_dir():
-    home = os.path.expanduser("~")
-
-    # On Linux, the localized folder names are the actual ones.
-    # It's a freedesktop standard though.
-    if sys.platform.startswith("linux"):
-        for file_item in (".config/user-dirs.dirs", "user-dirs.dirs"):
-            path = os.path.join(home, file_item)
-            if os.path.isfile(path):
-                with open(path, "r") as f:
-                    for line in f:
-                        if line.startswith("XDG_MUSIC_DIR"):
-                            return os.path.expandvars(
-                                line.strip().split("=")[1].strip('"')
-                            )
-
-    # Windows / Cygwin
-    # Queries registry for 'My Music' folder path (as this can be changed)
-    if "win" in sys.platform:
-        try:
-            key = winreg.OpenKey(
-                winreg.HKEY_CURRENT_USER,
-                r"Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders",
-                0,
-                winreg.KEY_ALL_ACCESS,
-            )
-            return winreg.QueryValueEx(key, "My Music")[0]
-        except (FileNotFoundError, NameError):
-            pass
-
-    # On both Windows and macOS, the localized folder names you see in
-    # Explorer and Finder are actually in English on the file system.
-    # So, defaulting to C:\Users\<user>\Music or /Users/<user>/Music
-    # respectively is sufficient.
-    # On Linux, default to /home/<user>/Music if the above method failed.
-    return os.path.join(home, "Music")
-
-
-def remove_duplicates(tracks):
-    """
-    Removes duplicates from a list whilst preserving order.
-
-    We could directly call `set()` on the list but it changes
-    the order of elements.
-    """
-
-    local_set = set()
-    local_set_add = local_set.add
-    return [x for x in tracks if not (x in local_set or local_set_add(x))]
 
 
 def content_available(url):

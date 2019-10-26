@@ -2,6 +2,7 @@ from mutagen.easyid3 import EasyID3
 from mutagen.id3 import ID3, TORY, TYER, TPUB, APIC, USLT, COMM
 from mutagen.mp4 import MP4, MP4Cover
 from mutagen.flac import Picture, FLAC
+import mutagen
 
 import urllib.request
 from logzero import logger as log
@@ -57,7 +58,11 @@ class EmbedMetadata:
         # For supported easyid3 tags:
         # https://github.com/quodlibet/mutagen/blob/master/mutagen/easyid3.py
         # Check out somewhere at end of above linked file
-        audiofile = EasyID3(music_file)
+        try:
+            audiofile = EasyID3(music_file)
+        except:
+            audiofile = mutagen.File(music_file, easy = True)
+            audiofile.add_tags()
         self._embed_basic_metadata(audiofile, preset=TAG_PRESET)
         audiofile["media"] = meta_tags["type"]
         audiofile["author"] = meta_tags["artists"][0]["name"]
